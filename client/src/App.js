@@ -22,6 +22,16 @@ export class MapContainer extends Component {
       price: {
         min: 0,
         max: 99999999
+      },
+      sqft: {
+        min: 0,
+        max: 10000
+      },
+      beds: {
+        min: 0
+      },
+      baths: {
+        min: 0
       }
     }
   };
@@ -94,6 +104,46 @@ export class MapContainer extends Component {
     }}));
   }
 
+  onMinSqftChange = (e) => {
+    this.setState(prevState => ({ ...prevState, filters: {
+      ...prevState.filters,
+      sqft: {
+        ...prevState.filters.sqft,
+        min: e.target.value
+      }
+    }}));
+  }
+
+  onMaxSqftChange = (e) => {
+    this.setState(prevState => ({ ...prevState, filters: {
+      ...prevState.filters,
+      sqft: {
+        ...prevState.filters.sqft,
+        max: e.target.value
+      }
+    }}));
+  }
+
+  onMinBedsChange = (e) => {
+    this.setState(prevState => ({ ...prevState, filters: {
+      ...prevState.filters,
+      beds: {
+        ...prevState.filters.beds,
+        min: e.target.value
+      }
+    }}));
+  }
+
+  onMinBathsChange = (e) => {
+    this.setState(prevState => ({ ...prevState, filters: {
+      ...prevState.filters,
+      baths: {
+        ...prevState.filters.baths,
+        min: e.target.value
+      }
+    }}));
+  }
+
   satisfiesAllFilters = (loc) => {
     let housingTypeFilter = this.state.filters.housingTypes
     let type = loc.type
@@ -106,8 +156,42 @@ export class MapContainer extends Component {
 
     let priceFilter = this.state.filters.price;
     let priceAsVal = Number(loc.price.slice(1).replace(/,/,''))
-    return priceAsVal >= priceFilter.min && priceAsVal <= priceFilter.max
+    if (!(priceAsVal >= priceFilter.min && priceAsVal <= priceFilter.max)) {
+      return false
+    }
+
+    let sqftFilter = this.state.filters.sqft;
+    let sqftAsVal = Number(loc.sqft.split('/')[0])
+    if (!(sqftAsVal >= sqftFilter.min && sqftAsVal <= sqftFilter.max)) {
+      return false
+    }
+
+    let bedBathSegments = loc.bed_baths.split('/')
+
+    let bedFilter = this.state.filters.beds;
+    let numBeds = Number(bedBathSegments[0])
+    if (!(numBeds >= bedFilter.min)) {
+      return false
+    }
+
+    let bathFilter = this.state.filters.baths;
+    let numBaths = Number(bedBathSegments[1].split(',')[0])
+    if (!(numBaths >= bathFilter.min)) {
+      return false
+    }  
+
+    return true
   };
+
+  getMarker = (loc) => {
+    if (loc.type === 'SFR') {
+      return "http://maps.google.com/mapfiles/ms/icons/red.png"
+    } else if (loc.type.includes('TWNHS')) {
+      return "http://maps.google.com/mapfiles/ms/icons/blue.png"
+    } else {
+      return "http://maps.google.com/mapfiles/ms/icons/green.png"
+    }
+  }
 
   render() {
     return (
@@ -137,6 +221,7 @@ export class MapContainer extends Component {
                 <input
                   type="text"
                   id={`minPrice`}
+                  className={'RangeInput'}
                   name='minPrice'
                   value={this.state.filters.price.min}
                   onChange={this.onMinPriceChange}
@@ -147,9 +232,60 @@ export class MapContainer extends Component {
                 <input
                   type="text"
                   id={`maxPrice`}
+                  className={'RangeInput'}
                   name='maxPrice'
                   value={this.state.filters.price.max}
                   onChange={this.onMaxPriceChange}
+                />
+              </div>
+            </div>
+            <br/>
+            <div>
+              <div className='Range'>
+                <label htmlFor={`minSqft`}>Min Sqft: </label>
+                <input
+                  type="text"
+                  id={`minSqft`}
+                  className={'RangeInput'}
+                  name='minSqft'
+                  value={this.state.filters.sqft.min}
+                  onChange={this.onMinSqftChange}
+                />
+              </div>
+              <div className='Range'>
+                <label htmlFor={`maxSqft`}>Max Sqft: </label>
+                <input
+                  type="text"
+                  id={`maxSqft`}
+                  className={'RangeInput'}
+                  name='maxSqft'
+                  value={this.state.filters.sqft.max}
+                  onChange={this.onMaxSqftChange}
+                />
+              </div>
+            </div>
+            <br/>
+            <div>
+              <div className='Range'>
+                <label htmlFor={`minBeds`}>Min Beds: </label>
+                <input
+                  type="text"
+                  id={`minBeds`}
+                  className={'RangeInput'}
+                  name='minBeds'
+                  value={this.state.filters.beds.min}
+                  onChange={this.onMinBedsChange}
+                />
+              </div>
+              <div className='Range'>
+                <label htmlFor={`minBaths`}>Min Baths: </label>
+                <input
+                  type="text"
+                  id={`minBaths`}
+                  className={'RangeInput'}
+                  name='minBaths'
+                  value={this.state.filters.baths.min}
+                  onChange={this.onMinBathsChange}
                 />
               </div>
             </div>
@@ -174,9 +310,7 @@ export class MapContainer extends Component {
                     key={loc["mls_id"]}
                     onClick={this.onMarkerClick}
                     position={loc["coordinates"]}
-                    icon={loc.type === 'SFR' 
-                      ? "http://maps.google.com/mapfiles/ms/icons/red.png"
-                      : "http://maps.google.com/mapfiles/ms/icons/blue.png"}
+                    icon={this.getMarker(loc)}
                     {...loc}
                   />)}
                   <InfoWindow
