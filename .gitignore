@@ -26,3 +26,5 @@ client/src/creds.*
 client/src/npm-debug.log*
 client/src/yarn-debug.log*
 client/src/yarn-error.log*
+
+importer/*.json
